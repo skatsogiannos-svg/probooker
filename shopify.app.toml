@@ -4,7 +4,7 @@
 # redirect_urls and [app_proxy].url placeholders with the production values.
 name = "ProBooker"
 handle = "probooker"
-client_id = "REPLACE_WITH_CLIENT_ID"
+client_id = "f804159ae70a76a4a3d0005a3e63fac3"
 application_url = "https://probooker.onrender.com"
 embedded = true
 
@@ -46,5 +46,5 @@ prefix = "apps"
 embedded = false
 
 [build]
-automatically_update_urls_on_dev = true
+automatically_update_urls_on_dev = false
 include_config_on_deploy = true
