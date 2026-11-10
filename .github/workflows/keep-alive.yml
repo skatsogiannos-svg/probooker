@@ -1,0 +1,15 @@
+name: Keep ProBooker Awake
+
+on:
+  schedule:
+    # Run every 10 minutes (Render free tier sleeps after 15 min of inactivity)
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          curl -f -s -S -m 30 https://probooker.onrender.com/health || echo "Ping failed"
