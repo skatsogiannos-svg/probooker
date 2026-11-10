@@ -5,7 +5,7 @@
 name = "ProBooker"
 handle = "probooker"
 client_id = "REPLACE_WITH_CLIENT_ID"
-application_url = "https://replace-with-your-url.example.com"
+application_url = "https://probooker.onrender.com"
 embedded = true
 
 [access_scopes]
@@ -16,9 +16,9 @@ scopes = "read_products"
 
 [auth]
 redirect_urls = [
-  "https://replace-with-your-url.example.com/auth/callback",
-  "https://replace-with-your-url.example.com/auth/shopify/callback",
-  "https://replace-with-your-url.example.com/api/auth/callback"
+  "https://probooker.onrender.com/auth/callback",
+  "https://probooker.onrender.com/auth/shopify/callback",
+  "https://probooker.onrender.com/api/auth/callback"
 ]
 
 [webhooks]
@@ -38,7 +38,7 @@ uri = "/webhooks"
 # which Shopify forwards (signed) to this app. Avoids CORS and keeps the
 # storefront origin same-origin.
 [app_proxy]
-url = "https://replace-with-your-url.example.com"
+url = "https://probooker.onrender.com"
 subpath = "booking"
 prefix = "apps"
 
