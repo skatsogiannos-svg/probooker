@@ -12,7 +12,7 @@ embedded = true
 # Least-privilege: the app reads products to turn them into bookable services.
 # No customer/order scopes are requested because bookings and customers are
 # stored in the app's own database.
-scopes = "read_products"
+scopes = "read_products,write_app_proxy"
 
 [auth]
 redirect_urls = [
@@ -47,4 +47,3 @@ embedded = false
 
 [build]
 automatically_update_urls_on_dev = false
-include_config_on_deploy = true
