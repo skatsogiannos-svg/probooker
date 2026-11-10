@@ -8,9 +8,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: probooker-db
-          property: connectionString
+        sync: false
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -29,9 +27,3 @@ services:
         value: "b2apps.dev@gmail.com"
       - key: SHOPIFY_BILLING_TEST
         value: "true"
-
-databases:
-  - name: probooker-db
-    plan: free
-    databaseName: probooker
-    user: probooker
