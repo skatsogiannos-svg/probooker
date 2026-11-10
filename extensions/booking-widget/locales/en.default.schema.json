@@ -1,0 +1,20 @@
+{
+  "blocks": {
+    "staff_first_booking": {
+      "name": "Choose your staff",
+      "settings": {
+        "staff_heading": {
+          "label": "Staff heading",
+          "default": "Who would you like to book with?"
+        },
+        "cta_label": {
+          "label": "Booking button label",
+          "default": "Request booking"
+        },
+        "accent_color": {
+          "label": "Accent color"
+        }
+      }
+    }
+  }
+}

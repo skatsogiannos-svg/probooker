@@ -1,0 +1,94 @@
+{% comment %}
+  Staff-First Booking Widget
+  Renders a "choose your person" booking flow for a product.
+
+  All requests go through the Shopify App Proxy at /apps/booking/*, so the
+  storefront stays same-origin (no CORS) and every request is HMAC-signed by
+  Shopify before it reaches the app.
+{% endcomment %}
+
+{% if product %}
+  {{ 'widget.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'widget.js' | asset_url }}" defer></script>
+
+  <div
+    class="sfb-widget"
+    data-sfb-widget
+    data-product-id="{{ product.id }}"
+    data-proxy-base="/apps/booking"
+    data-accent="{{ block.settings.accent_color }}"
+  >
+    <div class="sfb-widget__step" data-sfb-step="staff" aria-live="polite">
+      <h3 class="sfb-widget__title">{{ block.settings.staff_heading }}</h3>
+      <p class="sfb-widget__subtitle">Choose who you'd like to book with</p>
+      <div class="sfb-widget__staff-grid" data-sfb-staff-grid>
+        <div class="sfb-widget__loading">Loading team…</div>
+      </div>
+    </div>
+
+    <div class="sfb-widget__step sfb-widget__step--hidden" data-sfb-step="date">
+      <h3 class="sfb-widget__title">Pick a day</h3>
+      <div class="sfb-widget__dates" data-sfb-dates></div>
+      <h3 class="sfb-widget__title">Available times</h3>
+      <div class="sfb-widget__slots" data-sfb-slots>
+        <div class="sfb-widget__loading">Choose a day to see times.</div>
+      </div>
+    </div>
+
+    <div class="sfb-widget__step sfb-widget__step--hidden" data-sfb-step="details">
+      <h3 class="sfb-widget__title" data-sfb-details-title>Your details</h3>
+      <div class="sfb-widget__summary" data-sfb-summary></div>
+      <form data-sfb-form class="sfb-widget__form">
+        <label class="sfb-widget__label" for="sfb-name-{{ block.id }}">Name</label>
+        <input
+          id="sfb-name-{{ block.id }}"
+          type="text"
+          name="customerName"
+          placeholder="Your name"
+          autocomplete="name"
+          required
+        />
+        <label class="sfb-widget__label" for="sfb-email-{{ block.id }}">Email</label>
+        <input
+          id="sfb-email-{{ block.id }}"
+          type="email"
+          name="customerEmail"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        />
+        <button type="submit" class="sfb-widget__submit">{{ block.settings.cta_label }}</button>
+      </form>
+      <div class="sfb-widget__status" data-sfb-status aria-live="polite"></div>
+    </div>
+  </div>
+{% else %}
+  <p>Add this block to a product template to let customers book an appointment.</p>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Choose your staff",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "staff_heading",
+      "label": "Staff heading",
+      "default": "Who would you like to book with?"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Booking button label",
+      "default": "Request booking"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#111111"
+    }
+  ]
+}
+{% endschema %}

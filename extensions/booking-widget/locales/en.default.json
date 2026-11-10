@@ -1,0 +1,18 @@
+{
+  "general": {
+    "staff_first_booking": {
+      "widget": {
+        "loading_team": "Loading team…",
+        "choose_staff": "Choose who you'd like to book with",
+        "pick_day": "Pick a day",
+        "available_times": "Available times",
+        "choose_day": "Choose a day to see times.",
+        "your_details": "Your details",
+        "name": "Name",
+        "email": "Email",
+        "request_booking": "Request booking",
+        "sending": "Sending…"
+      }
+    }
+  }
+}

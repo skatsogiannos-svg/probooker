@@ -1,0 +1,50 @@
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+#
+# TODO before App Store submission: replace the client_id, application_url,
+# redirect_urls and [app_proxy].url placeholders with the production values.
+name = "ProBooker"
+handle = "probooker"
+client_id = "REPLACE_WITH_CLIENT_ID"
+application_url = "https://replace-with-your-url.example.com"
+embedded = true
+
+[access_scopes]
+# Least-privilege: the app reads products to turn them into bookable services.
+# No customer/order scopes are requested because bookings and customers are
+# stored in the app's own database.
+scopes = "read_products"
+
+[auth]
+redirect_urls = [
+  "https://replace-with-your-url.example.com/auth/callback",
+  "https://replace-with-your-url.example.com/auth/shopify/callback",
+  "https://replace-with-your-url.example.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2026-01"
+
+# Single endpoint that dispatches every topic (app/routes/webhooks.tsx).
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled", "app_subscriptions/update"]
+uri = "/webhooks"
+
+# Mandatory GDPR/compliance webhooks — required for App Store review.
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/webhooks"
+
+# App proxy: the storefront widget calls /apps/booking/* on the shop domain,
+# which Shopify forwards (signed) to this app. Avoids CORS and keeps the
+# storefront origin same-origin.
+[app_proxy]
+url = "https://replace-with-your-url.example.com"
+subpath = "booking"
+prefix = "apps"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true

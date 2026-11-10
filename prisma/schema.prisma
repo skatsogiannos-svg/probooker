@@ -1,0 +1,589 @@
+// Prisma schema for Staff-First Booking
+// Model reflects the MVP data model with consent + no-show policy extensions.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Shopify session storage (required by @shopify/shopify-app-session-storage-prisma) ---
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String    @unique @db.Text
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+// --- Merchant (one per shop) ---
+model Merchant {
+  id           String   @id @default(cuid())
+  shopDomain   String   @unique
+  plan         Plan     @default(FREE)
+  timezone     String   @default("UTC")
+  currency     String   @default("USD")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staff        Staff[]
+  services     Service[]
+  bookings     Booking[]
+  customers    BookingCustomer[]
+  waitlist     WaitlistEntry[]
+  policies     NoShowPolicy[]
+  resources    Resource[]
+  locations    Location[]
+  membershipPlans MembershipPlan[]
+  classSessions ClassSession[]
+  giftCertificates GiftCertificate[]
+  packages     ServicePackage[]
+  automations  MarketingAutomation[]
+  reviewRequests ReviewRequest[]
+  leads        Lead[]
+  competitorAlerts CompetitorAlertSubscription[]
+}
+
+enum Plan {
+  FREE
+  PRO
+  GROWTH
+}
+
+// --- Staff profile (first-class entity) ---
+model Staff {
+  id           String   @id @default(cuid())
+  merchantId   String
+  merchant     Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name         String
+  email        String?
+  phone        String?
+  photoUrl     String?
+  bio          String?  @db.Text
+  specialties  String[]
+  active       Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  availability Availability[]
+  blackouts    Blackout[]
+  services     StaffService[]
+  bookings     Booking[]
+  policies     NoShowPolicy[]
+  classSessions ClassSession[]
+  locations    StaffLocation[]
+
+  @@index([merchantId])
+}
+
+// --- Service (maps a Shopify product to bookable service) ---
+model Service {
+  id           String   @id @default(cuid())
+  merchantId   String
+  merchant     Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  shopifyProductId String
+  shopifyVariantId String?
+  title        String
+  durationMin  Int
+  bufferMin    Int      @default(0)
+  priceCents   Int
+  currency     String   @default("USD")
+  depositPct   Int      @default(0) // 0 = full payment
+  maxCapacity  Int      @default(1)
+  rebookAfterDays Int?  // Repeat & Rebook cycle
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staff        StaffService[]
+  bookings     Booking[]
+  questions    BookingQuestion[]
+  policies     NoShowPolicy[]
+  classSessions ClassSession[]
+  packages     ServicePackage[]
+
+  @@index([merchantId])
+  @@unique([merchantId, shopifyProductId])
+}
+
+// --- Join: which staff can perform which service ---
+model StaffService {
+  staffId   String
+  serviceId String
+  staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, serviceId])
+}
+
+// --- Weekly availability ---
+model Availability {
+  id        String @id @default(cuid())
+  staffId   String
+  staff     Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  weekday   Int    // 0=Sunday .. 6=Saturday
+  startMin  Int    // minutes from midnight
+  endMin    Int
+
+  @@index([staffId])
+}
+
+// --- Blackout / override dates ---
+model Blackout {
+  id        String   @id @default(cuid())
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  reason    String?
+}
+
+// --- Booking ---
+model Booking {
+  id             String        @id @default(cuid())
+  merchantId     String
+  merchant       Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  staffId        String
+  staff          Staff         @relation(fields: [staffId], references: [id])
+  serviceId      String
+  service        Service       @relation(fields: [serviceId], references: [id])
+  customerId     String?
+  customer       BookingCustomer? @relation(fields: [customerId], references: [id])
+  startsAt       DateTime
+  endsAt         DateTime
+  status         BookingStatus @default(PENDING)
+  depositCents   Int           @default(0)
+  orderId        String?
+  draftOrderId   String?
+  rescheduleToken String       @unique @default(cuid())
+  consentMarketing Boolean     @default(false)
+  notes          String?       @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  reminders      Reminder[]
+  answers        BookingAnswer[]
+  resourceId     String?
+  resource       Resource?  @relation(fields: [resourceId], references: [id])
+  classSessionId String?
+  classSession   ClassSession? @relation(fields: [classSessionId], references: [id])
+
+  @@index([merchantId, startsAt])
+  @@index([staffId, startsAt])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+  RESCHEDULED
+}
+
+// --- Booking customer (storefront customer, may or may not be Shopify customer) ---
+model BookingCustomer {
+  id            String   @id @default(cuid())
+  merchantId    String
+  merchant      Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  shopifyCustomerId String?
+  email         String
+  name          String?
+  phone         String?
+  consentMarketing Boolean @default(false)
+  createdAt     DateTime @default(now())
+
+  bookings      Booking[]
+  memberships   MembershipSubscription[]
+  packagePurchases PackagePurchase[]
+
+  @@unique([merchantId, email])
+  @@index([merchantId])
+}
+
+// --- Custom intake questions & answers ---
+model BookingQuestion {
+  id           String  @id @default(cuid())
+  serviceId    String
+  service      Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  label        String
+  type         QuestionType @default(TEXT)
+  required     Boolean @default(false)
+  options      String[]
+
+  answers      BookingAnswer[]
+}
+
+enum QuestionType {
+  TEXT
+  TEXTAREA
+  SELECT
+  CHECKBOX
+  NUMBER
+}
+
+model BookingAnswer {
+  id         String          @id @default(cuid())
+  bookingId  String
+  booking    Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  questionId String
+  question   BookingQuestion @relation(fields: [questionId], references: [id])
+  value      String          @db.Text
+
+  @@unique([bookingId, questionId])
+}
+
+// --- Reminders / notifications ---
+model Reminder {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  type        ReminderType
+  scheduledFor DateTime
+  sentAt      DateTime?
+
+  @@index([scheduledFor, sentAt])
+}
+
+enum ReminderType {
+  CONFIRMATION
+  REMINDER_24H
+  REMINDER_2H
+  FOLLOW_UP_REBOOK
+  WAITLIST_FILL
+}
+
+// --- Waitlist (with GDPR consent) ---
+model WaitlistEntry {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  staffId     String?
+  serviceId   String?
+  date        DateTime @db.Date
+  customerName  String
+  customerEmail String
+  consentMarketing Boolean @default(true)
+  notifiedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([merchantId, date])
+}
+
+// --- No-Show policy per staff/service ---
+model NoShowPolicy {
+  id            String  @id @default(cuid())
+  merchantId    String
+  merchant      Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  staffId       String?
+  staff         Staff?   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  serviceId     String?
+  service       Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  depositPct     Int     @default(0)
+  cancellationWindowHours Int @default(24)
+  lateCancelFeePct Int   @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([merchantId])
+}
+
+// ============================================================
+// v1.1+ EXPANSION — feature parity with Square / Fresha / Mindbody
+// ============================================================
+
+// --- Resource management: rooms, chairs, equipment (booked like staff) ---
+model Resource {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  type        ResourceType @default(ROOM)
+  capacity    Int      @default(1)
+  locationId  String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  bookings    Booking[]
+  @@index([merchantId])
+}
+
+enum ResourceType {
+  ROOM
+  CHAIR
+  EQUIPMENT
+  BAY
+}
+
+// --- Multi-location ---
+model Location {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  address     String?
+  timezone    String   @default("UTC")
+  active      Boolean  @default(true)
+
+  staff       StaffLocation[]
+  @@index([merchantId])
+}
+
+model StaffLocation {
+  staffId    String
+  locationId String
+  staff      Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  @@id([staffId, locationId])
+}
+
+// --- Memberships (recurring revenue) ---
+model MembershipPlan {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  priceCents  Int
+  interval    BillingCycle @default(MONTHLY)
+  creditsPerCycle Int   @default(0)   // e.g. 4 haircuts/month
+  discountPct Int      @default(0)
+  active      Boolean  @default(true)
+
+  subscriptions MembershipSubscription[]
+  @@index([merchantId])
+}
+
+enum BillingCycle {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model MembershipSubscription {
+  id          String   @id @default(cuid())
+  planId      String
+  plan        MembershipPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    BookingCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status      String   @default("ACTIVE")
+  creditsLeft Int      @default(0)
+  currentPeriodEnd DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([planId, customerId])
+  @@index([customerId])
+}
+
+// --- Class sessions & capacity (group booking) ---
+model ClassSession {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  staffId     String?
+  staff       Staff?   @relation(fields: [staffId], references: [id])
+  startsAt    DateTime
+  endsAt      DateTime
+  capacity    Int      @default(10)
+  locationId  String?
+  bookings    Booking[]
+  createdAt   DateTime @default(now())
+
+  @@index([merchantId, startsAt])
+}
+
+// --- Gift certificates ---
+model GiftCertificate {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  code        String   @unique
+  initialCents Int
+  balanceCents Int
+  currency    String   @default("USD")
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([merchantId])
+}
+
+// --- Packages / pre-paid bundles ---
+model ServicePackage {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  sessionCount Int
+  priceCents  Int
+  expiresAfterDays Int?
+  active      Boolean  @default(true)
+
+  purchases   PackagePurchase[]
+  @@index([merchantId])
+}
+
+model PackagePurchase {
+  id          String   @id @default(cuid())
+  packageId   String
+  package     ServicePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    BookingCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sessionsLeft Int
+  purchasedAt DateTime @default(now())
+  expiresAt   DateTime?
+
+  @@index([customerId])
+}
+
+// --- Marketing automation (win-back, birthday, lapsed) ---
+model MarketingAutomation {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  trigger     AutomationTrigger
+  channel     String   @default("email") // email | sms
+  template    String   @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  runs        AutomationRun[]
+  @@index([merchantId])
+}
+
+enum AutomationTrigger {
+  BOOKING_COMPLETED
+  NO_SHOW
+  LAPSED_CUSTOMER        // e.g. 60 days no booking
+  BIRTHDAY
+  FIRST_BOOKING
+  WAITLIST_OPENED
+}
+
+model AutomationRun {
+  id           String   @id @default(cuid())
+  automationId String
+  automation   MarketingAutomation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  customerId   String?
+  sentAt       DateTime @default(now())
+  meta         String?  @db.Text
+
+  @@index([automationId])
+}
+
+// --- Reputation / review collection ---
+model ReviewRequest {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  bookingId   String?
+  customerEmail String
+  rating      Int?     // 1-5, null until submitted
+  comment     String?  @db.Text
+  token       String   @unique @default(cuid())
+  requestedAt DateTime @default(now())
+  submittedAt DateTime?
+
+  @@index([merchantId])
+}
+
+// --- Lead hub (capture & nurture) ---
+model Lead {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String?
+  email       String
+  phone       String?
+  source      String?  // widget | waitlist | manual | import
+  status      String   @default("NEW") // NEW | CONTACTED | CONVERTED | LOST
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([merchantId, status])
+}
+
+// ============================================================
+// COMPETITOR MONITORING — the "watch the competition" engine
+// ============================================================
+
+// A competitor app/site we track. Stores the last content hash so we can
+// detect changes between scheduled crawls.
+model Competitor {
+  id           String   @id @default(cuid())
+  name         String
+  category     String   @default("shopify") // shopify | external
+  url          String
+  pricingUrl   String?
+  appStoreHandle String?               // for apps.shopify.com listings
+  active       Boolean  @default(true)
+  lastCrawledAt DateTime?
+  lastHash     String?                  // sha256 of normalized content
+  createdAt    DateTime @default(now())
+
+  snapshots    CompetitorSnapshot[]
+  changes      CompetitorChange[]
+  @@index([active])
+}
+
+// Raw snapshot of a crawl (kept for diffing / history).
+model CompetitorSnapshot {
+  id           String   @id @default(cuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  contentHash  String
+  features     String[]                 // normalized detected feature tags
+  pricing      String?  @db.Text        // extracted pricing text
+  rating       String?
+  reviewCount  Int?
+  rawText      String?  @db.Text
+  capturedAt   DateTime @default(now())
+
+  @@index([competitorId, capturedAt])
+}
+
+// A detected difference between two snapshots — this is what we alert on.
+model CompetitorChange {
+  id           String   @id @default(cuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  field        String                   // feature | pricing | rating | reviewCount
+  oldValue     String?  @db.Text
+  newValue     String?  @db.Text
+  summary      String                   // human-readable e.g. "Added feature: Reactivation SMS"
+  severity     String   @default("info") // info | notable | important
+  notified     Boolean  @default(false)
+  detectedAt   DateTime @default(now())
+
+  @@index([competitorId, detectedAt])
+  @@index([notified])
+}
+
+// Subscription for alerts — merchant or owner receives digests.
+model CompetitorAlertSubscription {
+  id           String   @id @default(cuid())
+  merchantId   String?
+  merchant     Merchant? @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  email        String
+  frequency    String   @default("weekly") // daily | weekly
+  minSeverity  String   @default("notable")
+  createdAt    DateTime @default(now())
+
+  @@index([email])
+}
