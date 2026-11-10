@@ -1,6 +1,7 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, HeadersFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useActionData, Form, useNavigation } from "@remix-run/react";
+import { useLoaderData, useActionData, Form, useNavigation, useRouteError } from "@remix-run/react";
+import { boundary } from "@shopify/shopify-app-remix/server";
 import {
   Page,
   Layout,
@@ -23,6 +24,10 @@ import prisma from "../db.server";
 import { getOrCreateMerchant } from "../lib/merchant.server";
 import { UncontrolledTextField } from "../components/FormFields";
 
+export const headers: HeadersFunction = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session, admin } = await authenticate.admin(request);
   const merchant = await getOrCreateMerchant(session.shop);
@@ -34,38 +39,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   // Fetch products from Shopify for the "convert product" flow
-  const resp = await admin.graphql(
-    `#graphql
-    query Products($first: Int!) {
-      products(first: $first, query: "status:active") {
-        edges {
-          node {
-            id
-            title
-            variants(first: 1) {
-              edges { node { id price } }
+  let products: Array<{ id: string; title: string; price: string; variantId: string | null }> = [];
+  try {
+    const resp = await admin.graphql(
+      `#graphql
+      query Products($first: Int!) {
+        products(first: $first, query: "status:active") {
+          edges {
+            node {
+              id
+              title
+              variants(first: 1) {
+                edges { node { id price } }
+              }
             }
           }
         }
-      }
-    }`,
-    { variables: { first: 50 } },
-  );
-  const body = await resp.json();
-  const edges: Array<{
-    node: {
-      id: string;
-      title: string;
-      variants: { edges: Array<{ node: { id: string; price: string } }> };
-    };
-  }> = body?.data?.products?.edges ?? [];
-
-  const products = edges.map((edge) => ({
-    id: edge.node.id,
-    title: edge.node.title,
-    price: edge.node.variants.edges[0]?.node.price ?? "0.00",
-    variantId: edge.node.variants.edges[0]?.node.id ?? null,
-  }));
+      }`,
+      { variables: { first: 50 } },
+    );
+    const body = await resp.json();
+    const edges = body?.data?.products?.edges ?? [];
+    products = edges.map((edge: any) => ({
+      id: edge.node.id,
+      title: edge.node.title,
+      price: edge.node.variants?.edges?.[0]?.node?.price ?? "0.00",
+      variantId: edge.node.variants?.edges?.[0]?.node?.id ?? null,
+    }));
+  } catch (err) {
+    console.error("[services] Could not query products from Shopify:", err);
+  }
 
   return json({
     currency: merchant.currency,
@@ -269,4 +272,8 @@ export default function Services() {
       </BlockStack>
     </Page>
   );
+}
+
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
 }
