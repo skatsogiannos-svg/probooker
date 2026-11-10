@@ -14,8 +14,9 @@ export const API_VERSION = "2026-01" as ApiVersion;
 
 // Billing plans — defined in code so app review sees them, and managed via
 // the Billing API. Only seats (staff) are limited; no revenue/booking cliffs.
-export const PRO_PLAN = "Pro";
+export const STARTER_PLAN = "Starter";
 export const GROWTH_PLAN = "Growth";
+export const SCALE_PLAN = "Scale";
 
 /**
  * Webhooks are declared in shopify.app.toml ([[webhooks.subscriptions]]) so
@@ -33,10 +34,10 @@ const shopify = shopifyApp({
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
   billing: {
-    [PRO_PLAN]: {
+    [STARTER_PLAN]: {
       lineItems: [
         {
-          amount: 14.99,
+          amount: 9.99,
           currencyCode: "USD",
           interval: BillingInterval.Every30Days,
         },
@@ -46,7 +47,17 @@ const shopify = shopifyApp({
     [GROWTH_PLAN]: {
       lineItems: [
         {
-          amount: 29.99,
+          amount: 19.99,
+          currencyCode: "USD",
+          interval: BillingInterval.Every30Days,
+        },
+      ],
+      trialDays: 14,
+    },
+    [SCALE_PLAN]: {
+      lineItems: [
+        {
+          amount: 39.99,
           currencyCode: "USD",
           interval: BillingInterval.Every30Days,
         },

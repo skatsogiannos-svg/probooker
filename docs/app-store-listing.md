@@ -105,10 +105,10 @@ Best of all: bookings and appointment volume are ALWAYS UNLIMITED on every plan.
 
 ---
 
-### 💰 Transparent Pricing — Unlimited Bookings Always
-- **Free Plan ($0/month):** 1 staff seat, unlimited bookings, storefront widget, self-service links.
-- **Pro Plan ($14.99/month):** Up to 5 staff seats, unlimited bookings, 14-day free trial.
-- **Growth Plan ($29.99/month):** Unlimited staff seats, unlimited bookings, 14-day free trial, priority developer support.
+### 💰 Transparent Pricing — All Plans Include 14-Day Free Trial
+- **Starter Plan ($9.99/month or $99/year):** 1 staff seat, unlimited bookings, storefront widget, self-service links.
+- **Growth Plan ($19.99/month or $190/year):** Up to 5 staff seats, unlimited bookings, custom intake questions, staff analytics.
+- **Scale Plan ($39.99/month or $390/year):** Unlimited staff seats, unlimited bookings, No-Shield (no-show protection & waitlist auto-fill), resource management, 24/7 priority support.
 
 ---
 
@@ -129,10 +129,11 @@ Best of all: bookings and appointment volume are ALWAYS UNLIMITED on every plan.
 
 | Field | Value |
 |---|---|
-| **Pricing Model** | Recurring subscription (with a Free tier) |
-| **Free Plan** | $0/mo — 1 staff seat, unlimited bookings, storefront widget |
-| **Pro Plan** | $14.99/mo (14-day free trial) — up to 5 staff seats |
-| **Growth Plan** | $29.99/mo (14-day free trial) — unlimited staff seats |
+| **Pricing Model** | Recurring subscription (No free plan — 14-day free trial on all plans) |
+| **Starter Plan** | $9.99/month (or $99/year) — 1 staff seat, unlimited bookings |
+| **Growth Plan** *(Popular)* | $19.99/month (or $190/year) — up to 5 staff seats, custom intake, staff analytics |
+| **Scale Plan** | $39.99/month (or $390/year) — unlimited staff seats, No-Shield, resource management |
+| **Free Trial** | 14 days on all plans |
 
 ---
 
@@ -140,9 +141,9 @@ Best of all: bookings and appointment volume are ALWAYS UNLIMITED on every plan.
 
 * **Developer Name:** `B2`
 * **Support Email:** `b2apps.dev@gmail.com`
-* **Support Website / App URL:** `https://<your-render-url>.onrender.com`
-* **Privacy Policy URL:** `https://<your-render-url>.onrender.com/privacy`
-* **Terms of Service URL:** `https://<your-render-url>.onrender.com/terms`
+* **Support Website / App URL:** `https://probooker.onrender.com`
+* **Privacy Policy URL:** `https://probooker.onrender.com/privacy`
+* **Terms of Service URL:** `https://probooker.onrender.com/terms`
 
 ---
 
@@ -157,28 +158,29 @@ Here is how you can test the full end-to-end merchant and customer experience:
 1. Installation:
    - Install the app on your development store. The app authenticates seamlessly with App Bridge and opens the Polaris dashboard.
 
-2. Create a Staff Member:
+2. Test Billing / Free Trial:
+   - Open "Plans". Choose any plan (Starter $9.99, Growth $19.99, or Scale $39.99).
+   - Test billing mode is active, so development stores can approve the 14-day free trial charge without real payment.
+
+3. Create a Staff Member:
    - Click "Staff" in the navigation menu.
    - Click "Add staff", enter a name (e.g. "Alex Rivers"), title (e.g. "Master Stylist"), and save.
    - Notice the default weekly availability (Mon–Fri 09:00–17:00) is preconfigured.
 
-3. Convert a Product into a Bookable Service:
+4. Convert a Product into a Bookable Service:
    - Click "Services" in the navigation menu.
    - Click "Add service", select any product from your store's catalog.
    - Set duration to 30 minutes, assign Alex Rivers, and save.
 
-4. Test Storefront Booking:
+5. Test Storefront Booking:
    - In Shopify Admin, open Online Store → Themes → Customize on your active theme.
    - Navigate to the product template for the product you made bookable.
    - Add the App Block "Choose your staff" (under Apps) and save.
    - View the product page on your storefront: select Alex Rivers, pick a date and time slot, enter customer details (e.g. "Jane Doe", "jane@example.com"), and confirm.
    - You will see the confirmation screen with a private link to reschedule or cancel.
 
-5. Test Admin Bookings:
+6. Test Admin Bookings:
    - Return to the app in Shopify Admin and open "Bookings". The newly placed booking will appear in the list with full details and status controls.
-
-6. Test Billing & Plans:
-   - Open "Plans". You can test upgrading to Pro or Growth. Test billing mode is active, so development stores can approve the charge without real payment.
 
 If you have any questions during review, please contact us at b2apps.dev@gmail.com.
 ```

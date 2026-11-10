@@ -160,19 +160,19 @@ export default function HelpAndDocs() {
                   <Divider />
                   <BlockStack gap="200">
                     <Text as="p">
-                      <strong>Free:</strong> $0 / month
+                      <strong>Starter:</strong> $9.99 / month (14-day trial)
                       <br />
-                      <span style={{ color: "#616161" }}>1 staff seat, unlimited bookings</span>
+                      <span style={{ color: "#616161" }}>1 staff seat, unlimited bookings & revenue</span>
                     </Text>
                     <Text as="p">
-                      <strong>Pro:</strong> $14.99 / month (14-day trial)
+                      <strong>Growth:</strong> $19.99 / month (14-day trial)
                       <br />
-                      <span style={{ color: "#616161" }}>Up to 5 staff seats, unlimited bookings</span>
+                      <span style={{ color: "#616161" }}>Up to 5 staff seats, custom intake, analytics</span>
                     </Text>
                     <Text as="p">
-                      <strong>Growth:</strong> $29.99 / month (14-day trial)
+                      <strong>Scale:</strong> $39.99 / month (14-day trial)
                       <br />
-                      <span style={{ color: "#616161" }}>Unlimited staff seats, priority support</span>
+                      <span style={{ color: "#616161" }}>Unlimited staff seats, No-Shield, priority support</span>
                     </Text>
                   </BlockStack>
                 </BlockStack>

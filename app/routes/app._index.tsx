@@ -87,7 +87,7 @@ export default function Dashboard() {
                     Welcome
                   </Text>
                   <Badge tone={merchant.plan === "FREE" ? "attention" : "success"}>
-                    {`${merchant.plan} plan`}
+                    {merchant.plan === "FREE" ? "14-Day Free Trial" : `${merchant.plan} Plan`}
                   </Badge>
                 </InlineStack>
                 <Text as="p" tone="subdued">

@@ -33,10 +33,11 @@ export async function action({ request }: ActionFunctionArgs) {
       const name = subscription?.name;
       const status = subscription?.status;
 
-      let plan: "FREE" | "PRO" | "GROWTH" = "FREE";
+      let plan: "FREE" | "STARTER" | "GROWTH" | "SCALE" = "FREE";
       if (status === "ACTIVE") {
-        if (name === "Pro") plan = "PRO";
+        if (name === "Scale") plan = "SCALE";
         else if (name === "Growth") plan = "GROWTH";
+        else if (name === "Starter") plan = "STARTER";
       }
 
       await db.merchant.updateMany({

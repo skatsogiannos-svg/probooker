@@ -59,8 +59,9 @@ model Merchant {
 
 enum Plan {
   FREE
-  PRO
+  STARTER
   GROWTH
+  SCALE
 }
 
 // --- Staff profile (first-class entity) ---

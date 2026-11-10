@@ -1,4 +1,5 @@
 import type { Plan } from "@prisma/client";
+export type { Plan };
 
 /**
  * Seat limits per plan. The product's positioning is that only staff seats are
@@ -7,14 +8,16 @@ import type { Plan } from "@prisma/client";
  */
 export const STAFF_SEATS: Record<Plan, number> = {
   FREE: 1,
-  PRO: 5,
-  GROWTH: Number.POSITIVE_INFINITY,
+  STARTER: 1,
+  GROWTH: 5,
+  SCALE: Number.POSITIVE_INFINITY,
 };
 
 export const PLAN_LABEL: Record<Plan, string> = {
-  FREE: "Free",
-  PRO: "Pro",
+  FREE: "Evaluation",
+  STARTER: "Starter",
   GROWTH: "Growth",
+  SCALE: "Scale",
 };
 
 export function staffSeatLimit(plan: Plan): number {
