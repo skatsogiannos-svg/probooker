@@ -10,7 +10,7 @@ import prisma from "./db.server";
 
 // Keep the Admin API and webhook versions pinned. Must stay in sync with
 // `[webhooks] api_version` in shopify.app.toml.
-export const API_VERSION = "2026-01" as ApiVersion;
+export const API_VERSION = "2026-10" as ApiVersion;
 
 // Billing plans — defined in code so app review sees them, and managed via
 // the Billing API. Only seats (staff) are limited; no revenue/booking cliffs.
@@ -67,6 +67,7 @@ const shopify = shopifyApp({
   },
   future: {
     unstable_newEmbeddedAuthStrategy: true,
+    expiringOfflineAccessTokens: true,
   },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }

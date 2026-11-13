@@ -27,6 +27,8 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+  refreshToken        String?   @db.Text
+  refreshTokenExpires DateTime?
 }
 
 // --- Merchant (one per shop) ---
